@@ -32,7 +32,9 @@
 
 namespace ozz {
 namespace animation {
-
+//仿射变换的三个维度在一个animation里面，也就是相同的duration里面，对应的关节帧是可以不一样的，比如平移有10帧，而旋转只有2帧，
+//是完全可以的。
+//TODO: track number 代表着什么？
 // Count translation, rotation or scale keyframes for a given track number. Use
 // a negative _track value to count all tracks.
 int CountTranslationKeyframes(const Animation& _animation, int _track = -1);

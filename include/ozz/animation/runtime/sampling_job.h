@@ -49,6 +49,7 @@ class SamplingCache;
 // Samples an animation at a given time ratio in the unit interval [0,1] (where
 // 0 is the beginning of the animation, 1 is the end), to output the
 // corresponding posture in local-space.
+// 对给定的动画在指定的ratio上进行采样，得到在关节本地空间的姿势。
 // SamplingJob uses a cache (aka SamplingCache) to store intermediate values
 // (decompressed animation keyframes...) while sampling. This cache also stores
 // pre-computed values that allows drastic optimization while playing/sampling
@@ -85,10 +86,13 @@ struct SamplingJob {
 
   // Job output.
   // The output range to be filled with sampled joints during job execution.
+  //
   // If there are less joints in the animation compared to the output range,
   // then remaining SoaTransform are left unchanged.
+  // 如果相对于输入，输出的关节数较少，说明剩余的关节未发生变化
   // If there are more joints in the animation, then the last joints are not
   // sampled.
+  // TODO(kaka): 为什么关节数多了，之前的关节未采样呢？
   span<ozz::math::SoaTransform> output;
 };
 

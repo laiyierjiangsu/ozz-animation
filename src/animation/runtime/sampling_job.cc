@@ -82,13 +82,14 @@ void UpdateCacheCursor(float _ratio, int _num_soa_tracks,
                        int* _cache, unsigned char* _outdated) {
   assert(_num_soa_tracks >= 1);
   const int num_tracks = _num_soa_tracks * 4;
+  //TODO(kaka): 为什么呢？
   assert(_keys.begin() + num_tracks * 2 <= _keys.end());
 
   const _Key* cursor = nullptr;
   if (!*_cursor) {
     // Initializes interpolated entries with the first 2 sets of key frames.
     // The sorting algorithm ensures that the first 2 key frames of a track
-    // are consecutive.
+    // are consecutive(连贯的，连续不断的）.
     for (int i = 0; i < _num_soa_tracks; ++i) {
       const int in_index0 = i * 4;                   // * soa size
       const int in_index1 = in_index0 + num_tracks;  // 2nd row.

@@ -51,7 +51,9 @@ struct Float3Key {
   uint16_t track;
   uint16_t value[3];
 };
-
+//四元数的压缩存储： https://blog.codingnow.com/2017/11/quaternion_compress.html
+//如何形象地理解四元数？https://www.zhihu.com/question/23005815
+//Understanding Quaternions 中文翻译《理解四元数》： https://www.qiujiawei.com/understanding-quaternions/
 // Defines the rotation key frame type.
 // Rotation value is a quaternion. Quaternion are normalized, which means each
 // component is in range [0:1]. This property allows to quantize the 3

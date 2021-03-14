@@ -31,7 +31,7 @@
 #include "ozz/base/platform.h"
 
 namespace ozz {
-
+//Span 类似于Std当中的数组
 // Defines a range [begin,end[ of objects ot type _Ty.
 template <typename _Ty>
 struct span {
@@ -158,6 +158,7 @@ inline span<char> as_writable_bytes(const span<char>& _span) {
 
 // Fills a typed span from a byte source span. Source byte span is modified to
 // reflect remain size.
+//从_src构建一个数量为_count的span， 并修改_src为剩余的内容
 template <typename _Ty>
 inline span<_Ty> fill_span(span<char>& _src, size_t _count) {
   assert(ozz::IsAligned(_src.data(), alignof(_Ty)) && "Invalid alignment.");
