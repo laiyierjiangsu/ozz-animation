@@ -73,15 +73,26 @@ using ozz::math::SoaTransform;
 // The following constants are used to define the millipede skeleton and
 // animation.
 // Skeleton constants.
+//right or left _up相对于root节点的初始偏移
 const Float3 kTransUp = Float3(0.f, 0.f, 0.f);
+// right or left _down 相对于_up节点的初始偏移
 const Float3 kTransDown = Float3(0.f, 0.f, 1.f);
+// right or left _foot相对于down节点的初始偏移
 const Float3 kTransFoot = Float3(1.f, 0.f, 0.f);
 
+//坐标系是右手法则，旋转的角度如果是正值，表示的是沿着逆时针旋转
 const Quaternion kRotLeftUp =
     Quaternion::FromAxisAngle(Float3::y_axis(), -ozz::math::kPi_2);
+
+//两个方向上四元数的乘法得到什么内容？
+//const Quaternion kRotLeftDown =
+//    Quaternion::FromAxisAngle(Float3::x_axis(), ozz::math::kPi_2) *
+//    Quaternion::FromAxisAngle(Float3::y_axis(), -ozz::math::kPi_2);
+
 const Quaternion kRotLeftDown =
-    Quaternion::FromAxisAngle(Float3::x_axis(), ozz::math::kPi_2) *
-    Quaternion::FromAxisAngle(Float3::y_axis(), -ozz::math::kPi_2);
+    Quaternion::FromAxisAngle(Float3::x_axis(), ozz::math::kPi_3) *
+    Quaternion::FromAxisAngle(Float3::y_axis(), -ozz::math::kPi_3);
+
 const Quaternion kRotRightUp =
     Quaternion::FromAxisAngle(Float3::y_axis(), ozz::math::kPi_2);
 const Quaternion kRotRightDown =
@@ -90,11 +101,16 @@ const Quaternion kRotRightDown =
 
 // Animation constants.
 const float kDuration = 6.f;
-const float kSpinLength = .5f;
-const float kWalkCycleLength = 2.f;
-const int kWalkCycleCount = 4;
-const float kSpinLoop = 2 * kWalkCycleCount * kWalkCycleLength / kSpinLength;
 
+//毛毛虫一片的长度
+const float kSpinLength = .5f;
+//毛毛虫每一步向前2
+const float kWalkCycleLength = 2.f;
+//毛毛虫向前走完四步之后，从头开始走
+const int kWalkCycleCount = 4;
+//毛毛虫前进的总长度： 为什么要放大2倍呢?而且只有一个地方用，用来算动画的偏移
+const float kSpinLoop = 2 * kWalkCycleCount * kWalkCycleLength / kSpinLength;
+//x- 爪子往中间靠  y- 爪子上下移动  z - 脊柱的方向，目前都是0，可以看到在骨骼的局部空间，都是没有脊柱方向平移的。
 const RawAnimation::TranslationKey kPrecomputedKeys[] = {
     {0.f * kDuration, Float3(.25f * kWalkCycleLength, 0.f, 0.f)},
     {.125f * kDuration, Float3(-.25f * kWalkCycleLength, 0.f, 0.f)},
@@ -116,7 +132,7 @@ const int kPrecomputedKeyCount = OZZ_ARRAY_SIZE(kPrecomputedKeys);
 
 class MillipedeSampleApplication : public ozz::sample::Application {
  public:
-  MillipedeSampleApplication() : slice_count_(26) {}
+  MillipedeSampleApplication() : slice_count_(1) {}
 
  protected:
   virtual bool OnUpdate(float _dt, float) {
@@ -243,12 +259,14 @@ class MillipedeSampleApplication : public ozz::sample::Application {
       ld.name += buf;
       ld.transform.translation = kTransDown;
       ld.transform.rotation = kRotLeftDown;
+     // ld.transform.rotation = Quaternion::identity();
       ld.transform.scale = Float3::one();
 
       ld.children.resize(1);
       RawSkeleton::Joint& lf = ld.children[0];
       lf.name = "lf";
       lf.name += buf;
+      //这三个值不填值，改变值，都无法影响最后呈现的动画，那这三个值设置了有何意义呢？
       lf.transform.translation = Float3::x_axis();
       lf.transform.rotation = Quaternion::identity();
       lf.transform.scale = Float3::one();
@@ -290,24 +308,36 @@ class MillipedeSampleApplication : public ozz::sample::Application {
   }
 
   void CreateAnimation(ozz::animation::offline::RawAnimation* _animation) {
+    //动画的时长
     _animation->duration = kDuration;
+    //动画的tracks和骨骼当前的节点数相当，等于每一个关节都有一个track
     _animation->tracks.resize(skeleton_->num_joints());
 
-    for (int i = 0; i < _animation->num_tracks(); ++i) {
+    for (int i = 0; i < _animation->num_tracks(); ++i) 
+    {
+      //第一个关节的track
       RawAnimation::JointTrack& track = _animation->tracks[i];
+      //找到关节的名字
       const char* joint_name = skeleton_->joint_names()[i];
-
-      if (strstr(joint_name, "ld") || strstr(joint_name, "rd")) {
+      //只找到了down这个节点， up这个节点貌似没做任何处理
+      if (strstr(joint_name, "ld") || strstr(joint_name, "rd"))
+      {
+        //如果是左节点
         bool left = joint_name[0] == 'l';  // First letter of "ld".
 
         // Copy original keys while taking into consideration the spine number
         // as a phase.
+        //joint_name + 2是存储的毛毛虫第几节的位置
         const int spine_number = std::atoi(joint_name + 2);
+
+        //在kDuration时间内要走完kSpinLoop,然后找到当前脊柱的位置在整个毛毛虫当中的偏移
         const float offset =
             kDuration * (slice_count_ - spine_number) / kSpinLoop;
+        //求得offset相对于Duration的余数，确保phase不会超过动画的总时长
         const float phase = std::fmod(offset, kDuration);
 
         // Loop to find animation start.
+        //找到第一个大于Phase的关键帧
         int i_offset = 0;
         while (i_offset < kPrecomputedKeyCount &&
                kPrecomputedKeys[i_offset].time < phase) {
@@ -315,20 +345,29 @@ class MillipedeSampleApplication : public ozz::sample::Application {
         }
 
         // Push key with their corrected time.
+        //每一个track的平移属性也预留了对应于关键帧的树木
         track.translations.reserve(kPrecomputedKeyCount);
-        for (int j = i_offset; j < i_offset + kPrecomputedKeyCount; ++j) {
-          const RawAnimation::TranslationKey& rkey =
-              kPrecomputedKeys[j % kPrecomputedKeyCount];
+        //从动画的起始位置开始一直循环，到了动画的末尾，再次回到开头，保证动画是从不同的位置开始循环的
+        for (int j = i_offset; j < i_offset + kPrecomputedKeyCount; ++j)
+	{
+          const RawAnimation::TranslationKey& rkey =kPrecomputedKeys[j % kPrecomputedKeyCount];
+          //可以画个图，等于time也在整个duration期间循环
           float new_time = rkey.time - phase;
-          if (new_time < 0.f) {
+          if (new_time < 0.f) 
+          {
             new_time = kDuration - phase + rkey.time;
           }
 
-          if (left) {
+          if (left)
+          {
+            //Left-down是kTransDown基础值加上对应动画的偏移
             const RawAnimation::TranslationKey tkey = {new_time,
                                                        kTransDown + rkey.value};
             track.translations.push_back(tkey);
-          } else {
+          } 
+          else
+          {
+            //Right-down在X方向和left-down是相反的，而y和z两个方向是保持一致的。
             const RawAnimation::TranslationKey tkey = {
                 new_time,
                 Float3(kTransDown.x - rkey.value.x, kTransDown.y + rkey.value.y,
@@ -338,33 +377,50 @@ class MillipedeSampleApplication : public ozz::sample::Application {
         }
 
         // Pushes rotation key-frame.
-        if (left) {
+        //为什么Rotation没有做预留呢？动画本身决定的，如果有需要，旋转也可以做动画的。
+        if (left)
+	{
           const RawAnimation::RotationKey rkey = {0.f, kRotLeftDown};
+          //改成下面的值，左脚的朝向就是指向前的，并没有朝下。
+         // const RawAnimation::RotationKey rkey =
+           // {0.f,   RawAnimation::RotationKey::identity()};
           track.rotations.push_back(rkey);
-        } else {
+        } 
+        else
+        {
           const RawAnimation::RotationKey rkey = {0.f, kRotRightDown};
           track.rotations.push_back(rkey);
         }
-      } else if (strstr(joint_name, "lu")) {
+      } 
+      else if (strstr(joint_name, "lu")) 
+      {
         const RawAnimation::TranslationKey tkey = {0.f, kTransUp};
         track.translations.push_back(tkey);
 
         const RawAnimation::RotationKey rkey = {0.f, kRotLeftUp};
         track.rotations.push_back(rkey);
 
-      } else if (strstr(joint_name, "ru")) {
+      } else
+      if (strstr(joint_name, "ru"))
+      {
         const RawAnimation::TranslationKey tkey0 = {0.f, kTransUp};
         track.translations.push_back(tkey0);
 
         const RawAnimation::RotationKey rkey0 = {0.f, kRotRightUp};
         track.rotations.push_back(rkey0);
-      } else if (strstr(joint_name, "lf")) {
+      }
+      else if (strstr(joint_name, "lf")) 
+      {
         const RawAnimation::TranslationKey tkey = {0.f, kTransFoot};
         track.translations.push_back(tkey);
-      } else if (strstr(joint_name, "rf")) {
+      } 
+      else if (strstr(joint_name, "rf"))
+      {
         const RawAnimation::TranslationKey tkey0 = {0.f, kTransFoot};
         track.translations.push_back(tkey0);
-      } else if (strstr(joint_name, "sp")) {
+      }
+      else if (strstr(joint_name, "sp"))
+      {
         const RawAnimation::TranslationKey skey = {
             0.f, Float3(0.f, 0.f, kSpinLength)};
         track.translations.push_back(skey);
@@ -372,7 +428,9 @@ class MillipedeSampleApplication : public ozz::sample::Application {
         const RawAnimation::RotationKey rkey = {
             0.f, ozz::math::Quaternion::identity()};
         track.rotations.push_back(rkey);
-      } else if (strstr(joint_name, "root")) {
+      }
+      else if (strstr(joint_name, "root"))
+      {
         const RawAnimation::TranslationKey tkey0 = {
             0.f, Float3(0.f, 1.f, -slice_count_ * kSpinLength)};
         track.translations.push_back(tkey0);
@@ -384,7 +442,8 @@ class MillipedeSampleApplication : public ozz::sample::Application {
       }
 
       // Make sure begin and end keys are looping.
-      if (track.translations.front().time != 0.f) {
+      if (track.translations.front().time != 0.f) 
+      {
         const RawAnimation::TranslationKey& front = track.translations.front();
         const RawAnimation::TranslationKey& back = track.translations.back();
         const float lerp_time =
@@ -393,7 +452,8 @@ class MillipedeSampleApplication : public ozz::sample::Application {
             0.f, Lerp(front.value, back.value, lerp_time)};
         track.translations.insert(track.translations.begin(), tkey);
       }
-      if (track.translations.back().time != kDuration) {
+      if (track.translations.back().time != kDuration)
+      {
         const RawAnimation::TranslationKey& front = track.translations.front();
         const RawAnimation::TranslationKey& back = track.translations.back();
         const float lerp_time =

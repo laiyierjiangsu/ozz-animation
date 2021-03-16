@@ -54,7 +54,11 @@ struct Float3Key {
 //四元数的压缩存储： https://blog.codingnow.com/2017/11/quaternion_compress.html
 //如何形象地理解四元数？https://www.zhihu.com/question/23005815
 //Understanding Quaternions 中文翻译《理解四元数》： https://www.qiujiawei.com/understanding-quaternions/
-// Defines the rotation key frame type.
+//定点数的定义：https://blog.csdn.net/jjj19891128/article/details/22945441
+//在计算机发展过程中，我们使用的小数和实数曾经提出过很多种的表示方法。典型的比如相对于浮点数的定点数（Fixed Point Number）。
+//在这种表达方式中，小数点固定的位于实数所有数字中间的某个位置。货币的表达就可以使用这种方式，比如 88.22 或者 22.88 可以用于
+//表达具有四位精度（Precision），小数点后有两位的货币值。由于小数点位置固定，所以可以直接用四位数值来表达相应的数值。
+    // Defines the rotation key frame type.
 // Rotation value is a quaternion. Quaternion are normalized, which means each
 // component is in range [0:1]. This property allows to quantize the 3
 // components to 3 signed integer 16 bits values. The 4th component is restored

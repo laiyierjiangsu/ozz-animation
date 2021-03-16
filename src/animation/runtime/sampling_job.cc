@@ -188,7 +188,7 @@ inline void DecompressFloat3(const Float3Key& _k0, const Float3Key& _k1,
   _soa_float3->z = math::HalfToFloat(math::simd_int4::Load(
       _k0.value[2], _k1.value[2], _k2.value[2], _k3.value[2]));
 }
-
+//TODO 2021.3.16 : 此处是四元数解压的地方，应该在省着对应的数据时候还有一个压缩算法
 // Defines a mapping table that defines components assignation in the output
 // quaternion.
 constexpr int kCpntMapping[4][4] = {
