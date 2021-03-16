@@ -1,3 +1,6 @@
+2021.3.16： 通读所有源代码，并添加所有的注释。
+
+
 [![logo](media/icon/ozz-grey-256.png)](http://guillaumeblanc.github.io/ozz-animation/)
 
 ozz-animation
