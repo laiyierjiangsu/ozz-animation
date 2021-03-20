@@ -60,8 +60,15 @@ function(FindFbxLibrariesGeneric _FBX_ROOT_DIR _OUT_FBX_LIBRARIES _OUT_FBX_LIBRA
 
   # Figures out matching compiler/os directory.
   
+   message("kaka 100 = x${CMAKE_CXX_COMPILER_ID}")
+   
+   
+   
   if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xMSVC")
-    if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.10)
+	message("kaka 101 = ${CMAKE_CXX_COMPILER_VERSION}")
+	if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.27)
+      set(FBX_CP_PATH "vs2019")
+    elseif(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.10)
       set(FBX_CP_PATH "vs2017")
     elseif(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19)
       set(FBX_CP_PATH "vs2015")
@@ -198,6 +205,7 @@ endfunction()
 # Deduce Fbx sdk version
 ###############################################################################
 function(FindFbxVersion _FBX_ROOT_DIR _OUT_FBX_VERSION)
+   message("kaka 200")
   # Opens fbxsdk_version.h in _FBX_ROOT_DIR and finds version defines.
 
   set(fbx_version_filename "${_FBX_ROOT_DIR}include/fbxsdk/fbxsdk_version.h")
@@ -236,7 +244,7 @@ endfunction()
 ###############################################################################
 # Main find package function
 ###############################################################################
-
+   message("kaka 300")
 # Tries to find FBX SDK path
 set(FBX_SEARCH_PATHS
   "${FBX_DIR}"
@@ -249,6 +257,8 @@ find_path(FBX_INCLUDE_DIR
   NAMES "include/fbxsdk.h"
   PATHS ${FBX_SEARCH_PATHS})
 
+ message("kaka 400")
+ 
 if(FBX_INCLUDE_DIR)
   # Deduce SDK root directory.
   set(FBX_ROOT_DIR "${FBX_INCLUDE_DIR}/")
@@ -256,6 +266,7 @@ if(FBX_INCLUDE_DIR)
   # Fills CMake standard variables
   set(FBX_INCLUDE_DIRS "${FBX_INCLUDE_DIR}/include")
 
+  message("kaka 401: FBX_INCLUDE_DIR =  ${FBX_INCLUDE_DIR} , FBX_INCLUDE_DIR =${FBX_INCLUDE_DIRS}")
   # Searches libraries according to the current compiler
   FindFbxLibrariesGeneric(${FBX_ROOT_DIR} FBX_LIBRARIES FBX_LIBRARIES_DEBUG)
 endif()
