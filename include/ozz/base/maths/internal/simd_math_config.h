@@ -94,7 +94,9 @@
 namespace ozz {
 namespace math {
 
-// Vector of four floating point values.
+//__m128该数据类型的变量可用做SSE指令的操作数，也可称作向量浮点数
+//，它们不能被用户指令直接存取。_m128类型的变量被自动分配为16个字节的字长。
+    // Vector of four floating point values.
 typedef __m128 SimdFloat4;
 
 // Argument type for Float4.

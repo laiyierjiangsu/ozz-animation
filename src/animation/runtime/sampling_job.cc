@@ -80,17 +80,40 @@ template <typename _Key>
 void UpdateCacheCursor(float _ratio, int _num_soa_tracks,
                        const ozz::span<const _Key>& _keys, int* _cursor,
                        int* _cache, unsigned char* _outdated) {
+  //_ratio:归一化的时间刻度，可以从关键帧列表当中找到对应的最接近的帧
+  //_num_soa_tracks：所有jonit节点的数量，每个点有自己的动画数据
+  //_keys：关键帧，用来插值，计算出每一时刻的坐标,
+  //平移和缩放类型如下
+  //struct Float3Key {
+    //float ratio;  //keys当中的分量是按照归一化的时间轴进行排序的
+    //uint16_t track; 一个关节点就是一个track，有自己的分量
+    //uint16_t value[3];//具体的内容
+  //};
+  //旋转的分量如下
+  //struct QuaternionKey {
+    //float ratio;
+    //uint16_t track : 13;   // The track this key frame belongs to.
+    //uint16_t largest : 2;  // The largest component of the quaternion.
+    //uint16_t sign : 1;     // The sign of the largest component. 1 for negative.
+    //int16_t value[3];      // The quantized value of the 3 smallest components.
+  //};
+  //_cursor：Current cursors in the animation. 0 means that the cache is invalid.
+  //_cache ： Points to the keys in the animation that are valid for the current time ratio.
+  //_outdated: Outdated soa entries. One bit per soa entry (32 joints per byte).
+
   assert(_num_soa_tracks >= 1);
   const int num_tracks = _num_soa_tracks * 4;
   //TODO(kaka): 为什么呢？
   assert(_keys.begin() + num_tracks * 2 <= _keys.end());
 
   const _Key* cursor = nullptr;
-  if (!*_cursor) {
+  if (!*_cursor) 
+  {
     // Initializes interpolated entries with the first 2 sets of key frames.
     // The sorting algorithm ensures that the first 2 key frames of a track
     // are consecutive(连贯的，连续不断的）.
-    for (int i = 0; i < _num_soa_tracks; ++i) {
+    for (int i = 0; i < _num_soa_tracks; ++i)
+    {
       const int in_index0 = i * 4;                   // * soa size
       const int in_index1 = in_index0 + num_tracks;  // 2nd row.
       const int out_index = i * 4 * 2;
@@ -108,12 +131,15 @@ void UpdateCacheCursor(float _ratio, int _num_soa_tracks,
     // All entries are outdated. It cares to only flag valid soa entries as
     // this is the exit condition of other algorithms.
     const int num_outdated_flags = (_num_soa_tracks + 7) / 8;
-    for (int i = 0; i < num_outdated_flags - 1; ++i) {
+    for (int i = 0; i < num_outdated_flags - 1; ++i)
+    {
       _outdated[i] = 0xff;
     }
     _outdated[num_outdated_flags - 1] =
         0xff >> (num_outdated_flags * 8 - _num_soa_tracks);
-  } else {
+  }
+  else 
+  {
     cursor = _keys.begin() + *_cursor;  // Might be == end()
     assert(cursor >= _keys.begin() + num_tracks * 2 && cursor <= _keys.end());
   }
@@ -123,10 +149,10 @@ void UpdateCacheCursor(float _ratio, int _num_soa_tracks,
   // for interpolation at time ratio _ratio, for all tracks. Thanks to the
   // keyframe sorting, the loop can end as soon as it finds a key greater that
   // _ratio. It will mean that all the keys lower than _ratio have been
-  // processed, meaning all cache entries are up to date.
+  // processed, meaning all cache entries are up to date(最新的).
   while (cursor < _keys.end() &&
          _keys[_cache[cursor->track * 2 + 1]].ratio <= _ratio) {
-    // Flag this soa entry as outdated.
+    // Flag this soa entry as outdated. soa是过期的
     _outdated[cursor->track / 32] |= (1 << ((cursor->track & 0x1f) / 4));
     // Updates cache.
     const int base = cursor->track * 2;
@@ -151,8 +177,12 @@ void UpdateInterpKeyframes(int _num_soa_tracks,
   for (int j = 0; j < num_outdated_flags; ++j) {
     uint8_t outdated = _outdated[j];
     _outdated[j] = 0;  // Reset outdated entries as all will be processed.
-    for (int i = j * 8; outdated; ++i, outdated >>= 1) {
-      if (!(outdated & 1)) {
+
+    for (int i = j * 8; outdated; ++i, outdated >>= 1)
+    {
+      //只需要处理当前之前的ratio和最新的ratio之间新增的keyframe
+      if (!(outdated & 1)) 
+      {
         continue;
       }
       const int base = i * 4 * 2;  // * soa size * 2 keys
@@ -162,6 +192,7 @@ void UpdateInterpKeyframes(int _num_soa_tracks,
       const _Key& k10 = _keys[_interp[base + 2]];
       const _Key& k20 = _keys[_interp[base + 4]];
       const _Key& k30 = _keys[_interp[base + 6]];
+      //这个ratio为啥是个floa4类型的啊？
       _interp_keys[i].ratio[0] =
           math::simd_float4::Load(k00.ratio, k10.ratio, k20.ratio, k30.ratio);
       _decompress(k00, k10, k20, k30, &_interp_keys[i].value[0]);
@@ -380,6 +411,7 @@ void SamplingCache::Resize(int _max_tracks) {
 
   // Computes allocation size.
   const size_t max_tracks = max_soa_tracks_ * 4;
+
   const size_t num_outdated = (max_soa_tracks_ + 7) / 8;
   const size_t size =
       sizeof(InterpSoaFloat3) * max_soa_tracks_ +
@@ -412,6 +444,7 @@ void SamplingCache::Resize(int _max_tracks) {
   assert(IsAligned(soa_scales_, alignof(InterpSoaFloat3)));
   alloc_cursor += sizeof(InterpSoaFloat3) * max_soa_tracks_;
 
+  //关键帧采用了四元素压缩技术
   translation_keys_ = reinterpret_cast<int*>(alloc_cursor);
   assert(IsAligned(translation_keys_, alignof(int)));
   alloc_cursor += sizeof(int) * max_tracks * 2;
@@ -420,6 +453,7 @@ void SamplingCache::Resize(int _max_tracks) {
   scale_keys_ = reinterpret_cast<int*>(alloc_cursor);
   alloc_cursor += sizeof(int) * max_tracks * 2;
 
+  //这下面的貌似只是用来记录了一个标记
   outdated_translations_ = reinterpret_cast<uint8_t*>(alloc_cursor);
   assert(IsAligned(outdated_translations_, alignof(uint8_t)));
   alloc_cursor += sizeof(uint8_t) * num_outdated;

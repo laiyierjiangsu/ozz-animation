@@ -244,7 +244,7 @@ endfunction()
 ###############################################################################
 # Main find package function
 ###############################################################################
-   message("kaka 300")
+ message("kaka 300 FBX_DIR = ${FBX_DIR} ,, ENV_FBX_DIR = $ENV{FBX_DIR}")
 # Tries to find FBX SDK path
 set(FBX_SEARCH_PATHS
   "${FBX_DIR}"
@@ -253,10 +253,16 @@ set(FBX_SEARCH_PATHS
   "$ENV{PROGRAMFILES}/Autodesk/FBX/FBX SDK/*/"
   "/Applications/Autodesk/FBX SDK/*/")
 
+ message("kaka 301 FBX_SEARCH_PATHS = ${FBX_SEARCH_PATHS} ")
+   
+ message("kaka 302 FBX_INCLUDE_DIR = ${FBX_INCLUDE_DIR} ")
+ 
 find_path(FBX_INCLUDE_DIR 
   NAMES "include/fbxsdk.h"
   PATHS ${FBX_SEARCH_PATHS})
 
+message("kaka 303 FBX_INCLUDE_DIR = ${FBX_INCLUDE_DIR} ")
+ 
  message("kaka 400")
  
 if(FBX_INCLUDE_DIR)
@@ -266,7 +272,7 @@ if(FBX_INCLUDE_DIR)
   # Fills CMake standard variables
   set(FBX_INCLUDE_DIRS "${FBX_INCLUDE_DIR}/include")
 
-  message("kaka 401: FBX_INCLUDE_DIR =  ${FBX_INCLUDE_DIR} , FBX_INCLUDE_DIR =${FBX_INCLUDE_DIRS}")
+  message("kaka 401: FBX_INCLUDE_DIR =  ${FBX_INCLUDE_DIR} ,FBX_INCLUDE_DIR =${FBX_INCLUDE_DIRS}")
   # Searches libraries according to the current compiler
   FindFbxLibrariesGeneric(${FBX_ROOT_DIR} FBX_LIBRARIES FBX_LIBRARIES_DEBUG)
 endif()
