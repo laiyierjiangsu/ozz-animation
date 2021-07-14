@@ -74,6 +74,8 @@ class Animation {
 
   // Returns the number of SoA elements matching the number of tracks of *this
   // animation. This value is useful to allocate SoA runtime data structures.
+  // 每一个track对应一个关节， 有 trans ,scale, rotation 分了
+  //这个地方四个为一组，难道是为了利用SIMD的数据，因为_m128正好是4个浮点数，所以四个四个一组，好进行计算
   int num_soa_tracks() const { return (num_tracks_ + 3) / 4; }
 
   // Gets animation name.

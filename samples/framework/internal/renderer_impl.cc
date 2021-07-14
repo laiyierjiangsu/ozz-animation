@@ -454,11 +454,13 @@ int DrawPosture_FillUniforms(const ozz::animation::Skeleton& _skeleton,
     }
 
     // Selects joint matrices.
+    //没一个骨骼点都有一个变换，这是一个4x4的矩阵，三个分量分别是什么呢？
     const math::Float4x4& parent = _matrices[parent_id];
     const math::Float4x4& current = _matrices[i];
 
     // Copy parent joint's raw matrix, to render a bone between the parent
     // and current matrix.
+    //父关节点决定了骨骼所在的位置
     float* uniform = _uniforms + instances * 16;
     math::StorePtr(parent.cols[0], uniform + 0);
     math::StorePtr(parent.cols[1], uniform + 4);
@@ -469,6 +471,7 @@ int DrawPosture_FillUniforms(const ozz::animation::Skeleton& _skeleton,
     // [3,7,11] of the matrix.
     // Index 15 is used to store whether a bone should be rendered,
     // otherwise it's a leaf.
+    //子关节点决定了骨骼的朝向
     float bone_dir[4];
     math::StorePtrU(current.cols[3] - parent.cols[3], bone_dir);
     uniform[3] = bone_dir[0];
@@ -491,6 +494,7 @@ int DrawPosture_FillUniforms(const ozz::animation::Skeleton& _skeleton,
 
       // Re-use bone_dir to fix the size of the leaf (same as previous bone).
       // The shader expects to find it at index [3,7,11] of the matrix.
+      //这个地方要了解下Shader是如何写的？
       uniform[3] = bone_dir[0];
       uniform[7] = bone_dir[1];
       uniform[11] = bone_dir[2];

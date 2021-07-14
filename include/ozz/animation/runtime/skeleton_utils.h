@@ -48,6 +48,7 @@ inline bool IsLeaf(const Skeleton& _skeleton, int _joint) {
   assert(_joint >= 0 && _joint < num_joints && "_joint index out of range");
   const span<const int16_t>& parents = _skeleton.joint_parents();
   const int next = _joint + 1;
+  //如果是最后一个节点 或者是当前节点的下一个节点的父节点非当前节点本身
   return next == num_joints || parents[next] != _joint;
 }
 

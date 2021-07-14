@@ -292,6 +292,7 @@ unique_ptr<Animation> AnimationBuilder::operator()(
   }
 
   // Add enough identity keys to match soa requirements.
+  //这个地方做了处理，把Array Of Struct变成了 Struct Of Array
   for (; i < num_soa_tracks; ++i) {
     typedef RawAnimation::TranslationKey SrcTKey;
     PushBackIdentityKey<SrcTKey>(i, 0.f, &sorting_translations);

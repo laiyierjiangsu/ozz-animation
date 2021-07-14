@@ -132,7 +132,7 @@ const int kPrecomputedKeyCount = OZZ_ARRAY_SIZE(kPrecomputedKeys);
 
 class MillipedeSampleApplication : public ozz::sample::Application {
  public:
-  MillipedeSampleApplication() : slice_count_(1) {}
+  MillipedeSampleApplication() : slice_count_(8) {}
 
  protected:
   virtual bool OnUpdate(float _dt, float) {
@@ -160,7 +160,7 @@ class MillipedeSampleApplication : public ozz::sample::Application {
   virtual bool OnDisplay(ozz::sample::Renderer* _renderer) {
     // Renders the animated posture.
     return _renderer->DrawPosture(*skeleton_, make_span(models_),
-                                  ozz::math::Float4x4::identity());
+                                  ozz::math::Float4x4::identity(), false);
   }
 
   virtual bool OnInitialize() { return Build(); }
@@ -310,10 +310,13 @@ class MillipedeSampleApplication : public ozz::sample::Application {
   void CreateAnimation(ozz::animation::offline::RawAnimation* _animation) {
     //动画的时长
     _animation->duration = kDuration;
+    auto num_joints = skeleton_->num_joints();
     //动画的tracks和骨骼当前的节点数相当，等于每一个关节都有一个track
-    _animation->tracks.resize(skeleton_->num_joints());
+    _animation->tracks.resize(num_joints);
 
-    for (int i = 0; i < _animation->num_tracks(); ++i) 
+    auto animation_tracks_num =  _animation->num_tracks();
+
+    for (int i = 0; i < animation_tracks_num; ++i) 
     {
       //第一个关节的track
       RawAnimation::JointTrack& track = _animation->tracks[i];

@@ -95,16 +95,17 @@ bool LocalToModelJob::Run() const {
 
     // Converts to aos matrices.
     math::Float4x4 local_aos_matrices[4];
-    math::Transpose16x16(&local_soa_matrices.cols[0].x,
-                         local_aos_matrices->cols);
+    math::Transpose16x16(&local_soa_matrices.cols[0].x,local_aos_matrices->cols);
 
+    //因为之前一次性读取了多个track的变换数据，这个地方需要一个一个的相对于父节点进行运算。
     // parents[i] >= from is true as long as "i" is a child of "from".
-    for (const int soa_end = (i + 4) & ~3; i < soa_end && process;
-         ++i, process = i < end && parents[i] >= from) {
+    const int soa_end = (i + 4) & ~3;
+    for ( ;i < soa_end && process; ++i, process = i < end && parents[i] >= from) {
       const int parent = parents[i];
-      const math::Float4x4* parent_matrix =
-          parent == Skeleton::kNoParent ? root_matrix : &output[parent];
-      output[i] = *parent_matrix * local_aos_matrices[i & 3];
+      const math::Float4x4* parent_matrix = parent == Skeleton::kNoParent ? root_matrix : &output[parent];
+
+      auto local_aos_matrices_index = i & 3;
+      output[i] = *parent_matrix * local_aos_matrices[local_aos_matrices_index];
     }
   }
   return true;

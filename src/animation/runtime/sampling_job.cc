@@ -103,7 +103,7 @@ void UpdateCacheCursor(float _ratio, int _num_soa_tracks,
 
   assert(_num_soa_tracks >= 1);
   const int num_tracks = _num_soa_tracks * 4;
-  //TODO(kaka): 为什么呢？
+  //TODO(kaka): 关键帧的数量
   assert(_keys.begin() + num_tracks * 2 <= _keys.end());
 
   const _Key* cursor = nullptr;
@@ -130,6 +130,7 @@ void UpdateCacheCursor(float _ratio, int _num_soa_tracks,
 
     // All entries are outdated. It cares to only flag valid soa entries as
     // this is the exit condition of other algorithms.
+    //都有的位都初始化为1,0代表过期了
     const int num_outdated_flags = (_num_soa_tracks + 7) / 8;
     for (int i = 0; i < num_outdated_flags - 1; ++i)
     {
@@ -152,8 +153,10 @@ void UpdateCacheCursor(float _ratio, int _num_soa_tracks,
   // processed, meaning all cache entries are up to date(最新的).
   while (cursor < _keys.end() &&
          _keys[_cache[cursor->track * 2 + 1]].ratio <= _ratio) {
-    // Flag this soa entry as outdated. soa是过期的
-    _outdated[cursor->track / 32] |= (1 << ((cursor->track & 0x1f) / 4));
+    // Flag this soa entry as outdated. soa是过期的,此处为什么是除以32呢？
+    auto flag = 1 << ((cursor->track & 0x1f) / 4);
+    // const size_t num_outdated = (max_soa_tracks_ + 7) / 8; outdata是字节类型，每一个字节代表了一个soa track
+    _outdated[cursor->track / 32] |= flag;
     // Updates cache.
     const int base = cursor->track * 2;
     _cache[base] = _cache[base + 1];
@@ -173,6 +176,15 @@ void UpdateInterpKeyframes(int _num_soa_tracks,
                            const int* _interp, uint8_t* _outdated,
                            _InterpKey* _interp_keys,
                            const _Decompress& _decompress) {
+  /*参数描述
+  //num_soa_tracks,
+  animation->translations(),
+  cache->translation_keys_,
+  cache->outdated_translations_,
+  cache->soa_translations_,
+  &DecompressFloat3
+ */
+
   const int num_outdated_flags = (_num_soa_tracks + 7) / 8;
   for (int j = 0; j < num_outdated_flags; ++j) {
     uint8_t outdated = _outdated[j];
@@ -187,6 +199,8 @@ void UpdateInterpKeyframes(int _num_soa_tracks,
       }
       const int base = i * 4 * 2;  // * soa size * 2 keys
 
+      //这里面的每一个key是一个关节点的变化（平移、缩放、拉升），属于不同的track
+      //为了提高效率，把这些处理合并到一个SOA的结构体当中
       // Decompress left side keyframes and store them in soa structures.
       const _Key& k00 = _keys[_interp[base + 0]];
       const _Key& k10 = _keys[_interp[base + 2]];
@@ -368,6 +382,9 @@ bool SamplingJob::Run() const {
                         &DecompressFloat3);
 
   // Interpolates soa hot data.
+  //在这一步的时候为了效率，将AOS转换为了SOA。
+  //https://stackoverflow.com/questions/17924705/structure-of-arrays-vs-array-of-structures-in-cuda
+  //因为后面从骨骼的本地空间变换到模型空间的时候，是四个元素一起处理的
   Interpolates(anim_ratio, num_soa_tracks, cache->soa_translations_,
                cache->soa_rotations_, cache->soa_scales_, output.begin());
 
