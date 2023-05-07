@@ -35,6 +35,9 @@ include(${PROJECT_SOURCE_DIR}/build-utils/cmake/package_settings.cmake)
 include(${PROJECT_SOURCE_DIR}/build-utils/cmake/fuse_target.cmake)
 include(${PROJECT_SOURCE_DIR}/build-utils/cmake/clang_format.cmake)
 include(${PROJECT_SOURCE_DIR}/build-utils/cmake/shared_library.cmake)
+if (MSVC)
+  add_compile_options(/wd4819)
+endif()
 
 # Add project execution options
 option(ozz_run_tests_headless "Run samples without rendering (used for unit tests)" ON)
