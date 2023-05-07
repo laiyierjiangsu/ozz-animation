@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------//
+﻿//----------------------------------------------------------------------------//
 //                                                                            //
 // ozz-animation is hosted at http://github.com/guillaumeblanc/ozz-animation  //
 // and distributed under the MIT License (MIT).                               //
@@ -128,6 +128,7 @@ struct OZZ_ANIMOFFLINE_DLL RawAnimation {
   // Returns the number of tracks of this animation.
   int num_tracks() const { return static_cast<int>(tracks.size()); }
 
+  //有多少根animated joint就有多少track
   // Stores per joint JointTrack, ie: per joint animation key-frames.
   // tracks_.size() gives the number of animated joints.
   ozz::vector<JointTrack> tracks;

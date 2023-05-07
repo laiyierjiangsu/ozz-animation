@@ -1,4 +1,4 @@
-//----------------------------------------------------------------------------//
+﻿//----------------------------------------------------------------------------//
 //                                                                            //
 // ozz-animation is hosted at http://github.com/guillaumeblanc/ozz-animation  //
 // and distributed under the MIT License (MIT).                               //
@@ -80,6 +80,7 @@ struct OZZ_ANIMOFFLINE_DLL RawSkeleton {
   // and counts them.
   int num_joints() const;
 
+  //TODO:为什么Root是一系列的Joint，不应该只有一个joint吗？
   // Declares the skeleton's roots. Can be empty if the skeleton has no joint.
   Joint::Children roots;
 };
