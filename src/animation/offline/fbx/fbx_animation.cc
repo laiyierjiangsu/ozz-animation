@@ -111,12 +111,14 @@ bool ExtractAnimation(FbxSceneLoader& _scene_loader, const SamplingInfo& _info,
   ozz::vector<FbxNode*> nodes;
   for (int i = 0; i < _skeleton.num_joints(); i++) {
     const char* joint_name = _skeleton.joint_names()[i];
+    //FindNodeName会返回空，表明这根骨骼没有动画
     nodes.push_back(scene->FindNodeByName(joint_name));
   }
 
   // Preallocates and initializes world matrices.
   const FixedRateSamplingTime fixed_it(_info.duration, _info.frequency);
 
+  //每一根骨骼都有关键数据
   ozz::vector<float> times;
   times.resize(fixed_it.num_keys());
   ozz::vector<ozz::vector<ozz::math::Float4x4>> world_matrices;
@@ -146,6 +148,7 @@ bool ExtractAnimation(FbxSceneLoader& _scene_loader, const SamplingInfo& _info,
     }
   }
 
+   //TODO:为什么会有没有动画的骨骼？
   // Builds world matrices for non-animated joints.
   // Skeleton is order with parents first, so it can be traversed in order.
   for (int i = 0; i < _skeleton.num_joints(); i++) {
@@ -155,9 +158,10 @@ bool ExtractAnimation(FbxSceneLoader& _scene_loader, const SamplingInfo& _info,
       ozz::log::LogV() << "No animation track found for joint \""
                        << _skeleton.joint_names()[i]
                        << "\". Using skeleton rest pose instead." << std::endl;
-
+      //TODO:rest_pose是什么概念？
       const math::Transform& rest_pose =
           ozz::animation::GetJointLocalRestPose(_skeleton, i);
+
       const math::SimdFloat4 t =
           math::simd_float4::Load3PtrU(&rest_pose.translation.x);
       const math::SimdFloat4 q =
@@ -209,6 +213,7 @@ bool ExtractAnimation(FbxSceneLoader& _scene_loader, const SamplingInfo& _info,
 
     const int16_t parent = _skeleton.joint_parents()[i];
     ozz::vector<math::Float4x4>& node_world_matrices = world_matrices[i];
+    //如果没有父节点，就采用根节点的矩阵
     ozz::vector<math::Float4x4>& node_world_inv_matrices =
         world_inv_matrices[parent != Skeleton::kNoParent ? parent : 0];
 
